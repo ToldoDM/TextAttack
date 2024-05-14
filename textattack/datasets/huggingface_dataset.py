@@ -93,6 +93,7 @@ class HuggingFaceDataset(Dataset):
             Factor to divide ground-truth outputs by. Generally, TextAttack goal functions require model outputs between 0 and 1.
             Some datasets are regression tasks, in which case this is necessary.
         shuffle (:obj:`bool`, `optional`, defaults to :obj:`False`): Whether to shuffle the underlying dataset.
+        random_seed (:obj:`int`, `optional`, defaults to :obj:`123`): Random seed for reproducibility. Used for shuffling.
 
             .. note::
                 Generally not recommended to shuffle the underlying dataset. Shuffling can be performed using DataLoader or by shuffling the order of indices we attack.
@@ -108,6 +109,7 @@ class HuggingFaceDataset(Dataset):
         label_names=None,
         output_scale_factor=None,
         shuffle=False,
+        random_seed=123,
     ):
         if isinstance(name_or_dataset, datasets.Dataset):
             self._dataset = name_or_dataset
@@ -149,7 +151,7 @@ class HuggingFaceDataset(Dataset):
 
         self.shuffled = shuffle
         if shuffle:
-            self._dataset.shuffle()
+            self.shuffle(random_seed=random_seed)
 
     def _format_as_dict(self, example):
         input_dict = collections.OrderedDict(
@@ -189,6 +191,6 @@ class HuggingFaceDataset(Dataset):
                 self._format_as_dict(self._dataset[j]) for j in range(i.start, i.stop)
             ]
 
-    def shuffle(self):
-        self._dataset.shuffle()
+    def shuffle(self, random_seed=123):
+        self._dataset = self._dataset.shuffle(seed=random_seed).flatten_indices()
         self.shuffled = True
